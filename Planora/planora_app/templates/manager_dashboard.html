@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-gray-100">
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-blue-900 text-white min-h-screen p-6">
+            <h2 class="text-2xl font-bold mb-6">Manager Dashboard</h2>
+            <ul>
+                <li class="mb-4"><a href="/projects" class="text-gray-300 hover:text-white">My Projects</a></li>
+                <li class="mb-4"><a href="/manager_tasks_view" class="text-gray-300 hover:text-white">Tasks</a></li>
+                <li class="mb-4"><a href="#" class="text-gray-300 hover:text-white">Assign Tasks</a></li>
+                <li><a href="/logout" class="text-red-400 hover:text-red-600">Logout</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6">
+            <h1 class="text-3xl font-bold mb-4">My Projects</h1>
+            <div class="grid grid-cols-3 gap-6">
+                {% for project in projects %}
+                <div class="bg-white shadow-md p-4 rounded-md">
+                    <h2 class="text-lg font-bold">{{ project.name }}</h2>
+                </div>
+                {% endfor %}
+            </div>
+
+            <h1 class="text-3xl font-bold mt-8 mb-4">Assign Task</h1>
+            <form  onsubmit="handleEvent(event)" method="post" class="bg-white p-6 rounded-md shadow-md">
+                {% csrf_token %}
+                <label class="block mb-2">Project:</label>
+                <select name="project_id" class="form-select mb-4">
+                    {% for project in projects %}
+                    <option value="{{ project.id }}">{{ project.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <label class="block mb-2">Developer:</label>
+                <select name="developer_id" class="form-select mb-4">
+                    {% for dev in developers %}
+                    <option value="{{ dev.id }}">{{ dev.username }}</option>
+                    {% endfor %}
+                </select>
+
+                <label class="block mb-2">Title:</label>
+                <input type="text" name="title" class="form-control mb-4" required />
+
+                <label class="block mb-2">Description:</label>
+                <textarea name="description" class="form-control mb-4" required></textarea>
+
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md">Assign Task</button>
+            </form>
+        </main>
+    </div>
+    <script>
+        function handleEvent(event) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+
+        fetch('/create_task', {
+            method: 'POST',
+            body: formData,
+
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert("Error: " + data.error);
+            } else {
+                alert("Success: " + data.message);
+                // window.location.href = "/manager_dashboard";  
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+        </script>
+</body>
+</html>

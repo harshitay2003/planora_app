@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %} 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{% static 'icon.png' %}" type="image/png">
+
+    <title>Planora - Plan & Work</title>
+    <title>{% block title %}Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-200 to-purple-400">
+    
+    <nav class="bg-slate-900 p-4 flex justify-between items-center shadow-lg">
+        <h1 class="text-white text-2xl font-bold">
+            {% if request.user.role == 'admin' %} 
+                Admin Dashboard
+            {% elif request.user.role == 'manager' %}
+                Manager Dashboard
+            {% else %}
+                Developer Dashboard
+            {% endif %}
+        </h1>
+
+        <div class="flex items-center space-x-4">
+            <a href="/chat" class="text-white hover:text-gray-300">
+                <i class="fas fa-comment-dots text-2xl"></i> 
+            </a>
+
+            
+
+            <div class="relative inline-block text-left">
+                <button id="settingsBtn" class="text-white hover:text-gray-300 focus:outline-none">
+                    <i class="fas fa-cog text-2xl"></i> 
+                </button>
+
+                <div id="dropdownMenu" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg">
+                    <a href="/logout" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Logout</a>
+                    {% if request.user.role == 'admin' %}
+                    <a href="/users" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Users</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+
+    <div class="flex">
+        <main class="flex-1 p-6">
+            {% block content %}{% endblock %}
+        </main>
+    </div>    
+
+    <script src="{% static 'js/script.js' %}" defer></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const settingsBtn = document.getElementById("settingsBtn");
+            const dropdownMenu = document.getElementById("dropdownMenu");
+
+            settingsBtn.addEventListener("click", function () {
+                dropdownMenu.classList.toggle("hidden");
+            });
+            document.addEventListener("click", function (event) {
+                if (!settingsBtn.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                    dropdownMenu.classList.add("hidden");
+                }
+            });
+        });
+    </script>
+</body>
+</html>

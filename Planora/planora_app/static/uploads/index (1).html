@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <title>Search and Display List</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .search-bar {
+      margin-bottom: 20px;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .item-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    .item img {
+      width: 60px;
+      height: 60px;
+      border-radius: 5px;
+      object-fit: cover;
+    }
+
+    .item .item-info {
+      flex: 1;
+      padding-right: 10px;
+    }
+
+    .item-title {
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .item-description {
+      font-size: 14px;
+      color: #666;
+      margin: 5px 0 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search music..." onkeyup="filterItems()">
+    </div>
+
+    <ul class="item-list" id="itemList">
+      <li class="item">
+        <div class="item-info">
+          <p class="item-title">Millionaire</p>
+          <p class="item-description">Yo Yo Honey Singh</p>
+        </div>
+        <img src="https://c.saavncdn.com/173/GLORY-Hindi-2024-20240926151002-500x500.jpg" alt="Item 1">
+      </li>
+      <li class="item">
+        <div class="item-info">
+          <p class="item-title">Item 2</p>
+          <p class="item-description">Yo Yo Honey Singh</p>
+        </div>
+        <img src="https://c.saavncdn.com/173/GLORY-Hindi-2024-20240926151002-500x500.jpg" alt="Item 2">
+      </li>
+      <li class="item">
+        <div class="item-info">
+          <p class="item-title">Item 3</p>
+          <p class="item-description">Yo Yo Honey Singh</p>
+        </div>
+        <img src="https://c.saavncdn.com/173/GLORY-Hindi-2024-20240926151002-500x500.jpg" alt="Item 3">
+      </li>
+
+    </ul>
+  </div>
+
+  <script>
+    function filterItems() {
+      const searchValue = document.getElementById('searchInput').value.toLowerCase();
+      console.log(searchValue)
+      const items = document.getElementById('itemList').getElementsByClassName('item');
+      $.ajax({
+        url: "http://192.168.0.153:5100/song/?query=" + searchValue + "&lyrics=true",
+        type: 'GET',
+        success: function (data) {
+          console.log(data)
+          data.forEach(function (store) {
+            console.log(store['song']);
+            console.log(store['singers']);
+            console.log(store['image']);
+            const itemList = document.getElementById('itemList');
+            itemList.innerHTML = '';
+            const listItem = document.createElement('li');
+            listItem.classList.add('item');
+
+            listItem.innerHTML = `
+                  <div class="item-info">
+                    <p class="item-title">${store['song']}</p>
+                    <p class="item-description">${store['singers']}</p>
+                  </div>
+                  <img src="${store['image']}" alt="${store['image']}">
+              `;
+
+            itemList.appendChild(listItem);
+
+
+          });
+        }
+      });
+
+      for (let i = 0; i < items.length; i++) {
+        const title = items[i].getElementsByClassName('item-title')[0].textContent.toLowerCase();
+        const description = items[i].getElementsByClassName('item-description')[0].textContent.toLowerCase();
+
+        if (title.includes(searchValue) || description.includes(searchValue)) {
+          items[i].style.display = '';
+        } else {
+          items[i].style.display = 'none';
+        }
+      }
+    }
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    };
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+
+  <div class="flex h-screen overflow-hidden">
+    <aside class="w-64 bg-white dark:bg-gray-800 shadow-md p-4 hidden md:block md:flex-shrink-0">
+      <h2 class="text-2xl font-bold mb-6" id="role-title">🔧 Admin</h2>
+      <nav class="space-y-4 text-sm">
+        <a href="/" class="block px-3 py-2 rounded bg-gray-200 dark:bg-gray-700 font-medium text-gray-900 dark:text-white">🏠 Home</a>
+        <a href="/projects" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300">📁 Projects</a>
+        <a href="/calender_page" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300 ">🗓️ Calendar</a>
+        <a href="/chat" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300">💬 Chat</a>
+        <!-- <a href="#" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300">📊 Reports</a> -->
+        <a href="/notifications_view" class="relative block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300">
+          🔔 Notifications
+          <span id="unread-badge" class="absolute top-1 right-2 bg-red-600 text-white font-semibold px-2 py-0.5 rounded-full hidden" style="line-height:1.5rem; font-size:0.75rem;">0</span>
+        </a>
+       
+        <div class="relative">
+          <button onclick="toggleSettings()" id="settings-menu" class="w-full text-left block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium">
+              ⚙️ Settings
+          </button>
+          <div id="settings-dropdown" class="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 shadow-lg rounded-md hidden z-50">
+              {% if request.user.role == 'admin' %}
+              <a href="/users" class="block px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">👥 Manage Users</a>
+              {% endif %}
+              <a href="/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-red-400">🚪 Logout</a>
+          </div>
+      </div>
+      </nav>
+    </aside>
+    <main class="flex-1 overflow-y-auto p-4 bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+      <div class="md:hidden mb-4">
+        <button onclick="document.querySelector('aside').classList.toggle('hidden')" class="px-3 py-2 bg-gray-800 text-white rounded">
+          ☰ Menu
+        </button>
+      </div>
+      <div class="flex justify-end mb-4">
+        <button onclick="toggleDarkMode()" class="px-3 py-2 bg-gray-300 dark:bg-gray-700 text-sm rounded">
+          🌞 / 🌙 Toggle Mode
+        </button>
+      </div>
+
+      <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6" id="main-heading">Admin Dashboard</h1>
+
+        <h2 class="text-xl font-semibold mb-2">📁 Project Overview</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-lg">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Projects</p>
+            <p id="total-projects" class="text-2xl font-bold">0</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-lg">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Created (7d)</p>
+            <p id="created-projects" class="text-2xl font-bold">0</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-lg">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Updated (7d)</p>
+            <p id="updated-projects" class="text-2xl font-bold">0</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-lg">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Due Soon</p>
+            <p id="due-soon" class="text-2xl font-bold">0</p>
+          </div>
+        </div>
+        <h2 class="text-xl font-semibold mb-2">📝 Task Breakdown</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-lg">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Assigned Tasks</p>
+            <p id="assigned-tasks" class="text-2xl font-bold">0</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-lg">
+            <p class="text-sm text-gray-500 dark:text-gray-400">In Progress</p>
+            <p id="inprogress-tasks" class="text-2xl font-bold">0</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-lg">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Review</p>
+            <p id="review-tasks" class="text-2xl font-bold">0</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-lg">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Completed</p>
+            <p id="completed-tasks" class="text-2xl font-bold">0</p>
+          </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-lg">
+            <h2 class="text-lg font-semibold mb-2">Task Status Overview</h2>
+            <canvas id="statusChart" height="200"></canvas>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-lg">
+            <h2 class="text-lg font-semibold mb-2">Project Progress</h2>
+            <div id="project-progress-bars" class="space-y-4 text-sm"></div>
+          </div>
+        </div>
+
+        <!-- Team workload and recent activity -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-lg">
+            <h2 class="text-lg font-semibold mb-4">Team Workload</h2>
+            <ul id="team-workload" class="space-y-2 text-sm"></ul>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-lg">
+            <h2 class="text-lg font-semibold mb-4">Recent Activity</h2>
+            <ul id="recent-activity" class="space-y-3 text-sm"></ul>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <!-- AI Assistant Floating Button -->
+<div id="ai-assistant-button" class="fixed bottom-4 right-4 z-50">
+  <button onclick="toggleAIAssistant()" class="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none">
+    🤖
+  </button>
+</div>
+
+<!-- AI Assistant Chat Box -->
+<div id="ai-assistant-box" class="fixed bottom-20 right-4 w-80 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg z-50 hidden">
+  <div class="flex justify-between items-center bg-blue-600 text-white px-4 py-2 rounded-t-lg">
+    <h3 class="font-semibold">AI Assistant</h3>
+    <button onclick="toggleAIAssistant()" class="text-white hover:text-gray-200">✖</button>
+  </div>
+  <div id="ai-chat-log" class="p-4 max-h-60 overflow-y-auto text-sm space-y-2 text-gray-800 dark:text-gray-100">
+    <p class="text-gray-500 dark:text-gray-400 italic">Ask me anything about your tasks or projects...</p>
+  </div>
+  <form onsubmit="sendAIMessage(event)" class="flex items-center p-2 border-t dark:border-gray-700">
+    <input id="ai-user-input" type="text" placeholder="Type a message..." class="flex-1 px-2 py-1 rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600 text-sm focus:outline-none">
+    <button type="submit" class="ml-2 text-blue-600 dark:text-blue-400 font-bold">Send</button>
+  </form>
+</div>
+
+
+  <!-- JS to Fetch Dashboard Data + Dark Mode Toggle -->
+  <script>
+     async function fetchUnreadNotifications() {
+    try {
+      const response = await fetch('/get_unread_notification_count');
+      const data = await response.json();
+      if (data.unread_count > 0) {
+        const badge = document.getElementById("unread-badge");
+        badge.textContent = data.unread_count;
+        badge.classList.remove("hidden");
+      }
+    } catch (error) {
+      console.error("Failed to load unread notifications:", error);
+    }
+  }
+    function toggleSettings() {
+        const dropdown = document.getElementById("settings-dropdown");
+        dropdown.classList.toggle("hidden");
+    }
+
+    // Optional: Hide on click outside
+    document.addEventListener("click", function (event) {
+      console.log("inside")
+        const button = document.getElementById("settings-menu");
+        const dropdown = document.getElementById("settings-dropdown");
+        if (!button.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.classList.add("hidden");
+        }
+    });
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+
+    async function loadDashboard() {
+      if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+      fetchUnreadNotifications();
+
+      const response = await fetch('/get_admin_dashboard');
+      const data = await response.json();
+
+      document.getElementById('total-projects').textContent = data.projects.total;
+      document.getElementById('created-projects').textContent = data.projects.created;
+      document.getElementById('updated-projects').textContent = data.projects.updated;
+      document.getElementById('due-soon').textContent = data.due_soon;
+
+      // const settingsMenu = document.getElementById("settings-menu");
+      // settingsMenu.innerHTML = "";
+
+      // if (data.role === "admin") {
+      //   settingsMenu.innerHTML = `
+      //     <p class="text-sm font-semibold text-gray-600 dark:text-gray-300 px-2 mt-4">⚙️ Settings</p>
+      //     <a href="/user-management" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300">👥 User Management</a>
+      //     <a href="/logout" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300">🚪 Logout</a>
+      //   `;
+      // } else {
+      //   settingsMenu.innerHTML = `
+      //     <p class="text-sm font-semibold text-gray-600 dark:text-gray-300 px-2 mt-4">⚙️ Settings</p>
+      //     <a href="/logout" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300">🚪 Logout</a>
+      //   `;
+      // }
+
+      if (data.role === "admin") {
+        document.getElementById("role-title").textContent = "🔧 Admin";
+        document.getElementById("main-heading").textContent = "Admin Dashboard";
+      } else if (data.role === "manager") {
+        document.getElementById("role-title").textContent = "📂 Manager";
+        document.getElementById("main-heading").textContent = "Manager Dashboard";
+      } else if (data.role === "developer") {
+        document.getElementById("role-title").textContent = "💻 Developer";
+        document.getElementById("main-heading").textContent = "Developer Dashboard";
+        document.getElementById("team-workload").parentElement.style.display = "none";
+        document.getElementById("recent-activity").parentElement.style.display = "none";
+      }
+
+      const taskCounts = {
+        "Assigned": 0,
+        "In Progress": 0,
+        "Review": 0,
+        "Completed": 0
+      };
+
+      data.task_status.forEach(task => {
+        taskCounts[task.status] = task.count;
+      });
+
+      document.getElementById("assigned-tasks").innerText = taskCounts["Assigned"];
+      document.getElementById("inprogress-tasks").innerText = taskCounts["In Progress"];
+      document.getElementById("review-tasks").innerText = taskCounts["Review"];
+      document.getElementById("completed-tasks").innerText = taskCounts["Completed"];
+
+      const ctx = document.getElementById('statusChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: data.task_status.map(s => s.status),
+          datasets: [{
+            label: 'Tasks',
+            data: data.task_status.map(s => s.count),
+            backgroundColor: ['#3B82F6', '#F59E0B', '#10B981', '#EF4444'],
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+
+      const progressContainer = document.getElementById('project-progress-bars');
+      progressContainer.innerHTML = '';
+      data.project_progress.forEach(p => {
+        progressContainer.innerHTML += `
+        <div class="mb-4">
+          <p class="mb-1 font-medium">${p.project}</p>
+          <div class="flex justify-between text-xs text-gray-500 mb-1 px-1">
+            <span>✅ Done</span>
+            <span>⏳ In Progress</span>
+            <span>📝 To Do</span>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-5 flex overflow-hidden text-white text-xs font-semibold">
+            <p class="bg-green-500 h-5 flex items-center justify-center" style="width: ${p.done}%">${p.done > 5 ? `${p.done}%` : ''}</p>
+            <p class="bg-blue-500 h-5 flex items-center justify-center" style="width: ${p.in_progress}%">${p.in_progress > 5 ? `${p.in_progress}%` : ''}</p>
+            <p class="bg-gray-400 h-5 flex items-center justify-center" style="width: ${p.to_do}%">${p.to_do > 5 ? `${p.to_do}%` : ''}</p>
+          </div>
+        </div>`;
+      });
+
+      const workloadList = document.getElementById('team-workload');
+      workloadList.innerHTML = '';
+      data.team_workload.forEach(dev => {
+        workloadList.innerHTML += `<li><strong>${dev.username}:</strong> ${dev.task_count} tasks</li>`;
+      });
+
+      const activityList = document.getElementById('recent-activity');
+      activityList.innerHTML = '';
+      data.recent_activity.forEach(act => {
+        activityList.innerHTML += `<li>
+          <strong>${act.author}</strong> commented on <em>${act.task}</em><br>
+          <span class="text-gray-600 dark:text-gray-400 text-xs">${new Date(act.created_at).toLocaleString()}</span><br>
+          <div class="mt-1">${act.comment}</div>
+        </li>`;
+      });
+    }
+    function toggleAIAssistant() {
+  const chatBox = document.getElementById("ai-assistant-box");
+  chatBox.classList.toggle("hidden");
+}
+
+async function sendAIMessage(event) {
+  event.preventDefault();
+  const input = document.getElementById("ai-user-input");
+  const message = input.value.trim();
+  if (!message) return;
+
+  const chatLog = document.getElementById("ai-chat-log");
+  chatLog.innerHTML += `<div class="text-right"><strong>You:</strong> ${message}</div>`;
+  input.value = "";
+
+  try {
+    const response = await fetch("/ai_assistant", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken")
+      },
+      body: JSON.stringify({ message })
+    });
+
+    const data = await response.json();
+    chatLog.innerHTML += `<div><strong>AI:</strong> ${data.reply}</div>`;
+    chatLog.scrollTop = chatLog.scrollHeight;
+  } catch (error) {
+    chatLog.innerHTML += `<div class="text-red-500">Error fetching AI response.</div>`;
+  }
+}
+
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+
+    loadDashboard();
+  </script>
+</body>
+</html>

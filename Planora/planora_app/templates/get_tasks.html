@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Board</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Dark mode setup
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white dark:bg-gray-800 p-6 hidden md:block">
+    <h2 class="text-xl font-bold mb-4">Dashboard</h2>
+    <ul class="space-y-3">
+      <li><a href="/admin_dashboard" class="hover:text-blue-500">Home</a></li>
+      <li><a href="/projects" class="hover:text-blue-500">Projects</a></li>
+      <li><a href="/tasks" class="text-blue-600 font-semibold">Tasks</a></li>
+      <!-- Add more links as needed -->
+    </ul>
+  </aside>
+
+  <!-- Main content -->
+  <main class="flex-1 p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">Task Board</h1>
+      <button id="darkModeToggle" class="bg-gray-300 dark:bg-gray-700 px-3 py-1 rounded text-sm">
+        Toggle Dark Mode
+      </button>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {% for status, task_group in tasks_by_status.items %}
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+          <h2 class="text-xl font-semibold mb-4">{{ status }}</h2>
+          <div class="space-y-4 min-h-[200px]" id="column-{{ status|slugify }}" ondrop="drop(event)" ondragover="allowDrop(event)">
+            {% for task in task_group %}
+              <div class="p-3 bg-gray-100 dark:bg-gray-700 rounded cursor-move shadow" 
+                   id="task-{{ task.id }}" 
+                   draggable="true" 
+                   ondragstart="drag(event)">
+                <h3 class="font-semibold">{{ task.title }}</h3>
+                <p class="text-sm">{{ task.description|truncatewords:10 }}</p>
+                <p class="text-xs text-right text-gray-500 dark:text-gray-400">Due: {{ task.deadline }}</p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </main>
+
+  <script>
+    // Drag and Drop Functions
+    function allowDrop(ev) {
+      ev.preventDefault();
+    }
+
+    function drag(ev) {
+      ev.dataTransfer.setData("text", ev.target.id);
+    }
+
+    function drop(ev) {
+      ev.preventDefault();
+      const data = ev.dataTransfer.getData("text");
+      const task = document.getElementById(data);
+      ev.target.appendChild(task);
+
+      // Optional: Add AJAX call here to update task status in DB
+    }
+
+    // Dark Mode Toggle
+    const darkToggle = document.getElementById("darkModeToggle");
+    const html = document.documentElement;
+
+    // Apply saved theme
+    if (localStorage.getItem("theme") === "dark") {
+      html.classList.add("dark");
+    }
+
+    darkToggle.addEventListener("click", () => {
+      html.classList.toggle("dark");
+      localStorage.setItem("theme", html.classList.contains("dark") ? "dark" : "light");
+    });
+  </script>
+
+</body>
+</html>

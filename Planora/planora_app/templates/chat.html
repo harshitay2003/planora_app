@@ -1,0 +1,679 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+</head>
+<style>
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.message {
+    padding: 15px 20px;
+    border-radius: 15px;
+    max-width: fit-content; 
+    min-width: 100px; 
+    position: relative;
+    word-wrap: break-word;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.self {
+    background-color: #4CAF50;
+    color: white;
+    align-self: flex-end;
+    text-align: left;
+    margin-left: auto;
+}
+
+.other {
+    background-color: #ddd;
+    color: black;
+    align-self: flex-start;
+    text-align: left;
+    margin-right: auto;
+}
+
+.options {
+    position: relative; /* changed from absolute */
+    z-index: 10;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 18px;
+    display: none;
+    top:5%
+}
+
+.message:hover .options {
+    display: block;
+}
+.self .options {
+    right: 2px;
+    position: absolute; 
+}
+
+.other .options {
+    left: 2px;
+    position: absolute;
+}
+
+.dropdown-menu {
+    position: absolute;
+    z-index: 1000; 
+    background: white;
+    color: black;
+    width: 150px;
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    display: none;
+}
+
+
+
+
+.self .dropdown-menu {
+    top: 100%;
+    right: 0;
+}
+
+.other .dropdown-menu {
+    top: 100%;
+    left: 0;
+}
+
+.dropdown-item {
+    padding: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.dropdown-item:hover {
+    background-color: #f0f0f0;
+}
+
+@media (max-width: 600px) {
+    .options {
+        font-size: 16px;
+        right: -20px;
+        left: -20px;
+    }
+
+    .dropdown-menu {
+        width: 130px;
+        font-size: 12px;
+    }
+}
+
+
+
+</style>
+
+</style>
+<body class="bg-gray-100 dark:bg-gray-900 h-screen text-gray-900 dark:text-gray-100">
+    <div class="flex h-screen overflow-hidden">
+  
+      <!-- Sidebar -->
+      <aside class="w-64 bg-white dark:bg-gray-800 shadow-md p-4 hidden md:block md:flex-shrink-0">
+        {% if request.user.role == 'admin' %} 
+        <h2 class="text-2xl font-bold mb-6" id="role-title">🛠️ Admin</h2>
+        {% elif request.user.role == 'manager' %}
+        <h2 class="text-2xl font-bold mb-6" id="role-title">📂 Manager</h2>
+        {% else %}
+        <h2 class="text-2xl font-bold mb-6" id="role-title">💻 Developer</h2>
+        {% endif %}
+  
+        <nav class="space-y-4 text-sm">
+          <a href="/" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300">🏠 Home</a>
+          <a href="/projects" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300  ">📁 Projects</a>
+          <a href="/calender_page" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300 ">🗓️ Calendar</a>
+          <a href="/chat" class="block px-3 py-2 rounded bg-gray-200 dark:bg-gray-700 font-medium text-gray-900 dark:text-white">💬 Chat</a>
+          <!-- <a href="#" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300">📊 Reports</a> -->
+          <a href="/notifications_view" class="relative block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300">
+            🔔 Notifications
+            <span id="unread-badge" class="absolute top-1 right-2 bg-red-600 text-white font-semibold px-2 py-0.5 rounded-full hidden" style="line-height:1.5rem; font-size:0.75rem;">0</span>
+          </a>
+          <div class="relative">
+            <button onclick="toggleSettings(event)" id="settings-menu" class="w-full text-left block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium">
+                ⚙️ Settings
+            </button>
+            <div id="settings-dropdown" class="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 shadow-lg rounded-md hidden z-50">
+                {% if request.user.role == 'admin' %}
+                <a href="/users" class="block px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">👥 Manage Users</a>
+                {% endif %}
+                <a href="/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-red-400">🚪 Logout</a>
+            </div>
+        </div>
+        </nav>
+      </aside>
+      <main class="flex-1 overflow-y-auto p-4 bg-gray-100 dark:bg-gray-900">
+        <div class="md:hidden mb-4">
+          <button onclick="document.querySelector('aside').classList.toggle('hidden')" class="px-3 py-2 bg-gray-800 text-white rounded">
+            ☰ Menu
+          </button>
+        </div>
+        <div class="flex justify-end mb-4">
+          <button onclick="toggleDarkMode()" class="px-3 py-2 bg-gray-300 dark:bg-gray-700 text-sm rounded">
+            🌞 / 🌙 Toggle Mode
+          </button>
+        </div>
+        <div class="flex h-[85vh] gap-4">
+          <div class="w-1/3 bg-white dark:bg-gray-800 shadow-lg p-4 overflow-y-auto rounded-lg" style="width:19%;">
+            <h2 class="text-xl font-bold mb-4">Users</h2>
+            <ul id="userList">
+              {% for user in users %}
+              <li class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer flex items-center rounded"
+                  onclick="openChat('{{ user.id }}', '{{ user.username }}')">
+                <i class="fas fa-user-circle text-blue-500 text-2xl mr-2"></i>
+                <span>{{ user.username }}</span>
+              </li>
+              {% empty %}
+              <li class="text-gray-500 dark:text-gray-400">No users available</li>
+              {% endfor %}
+            </ul>
+          </div>
+  
+          <!-- Chat Section -->
+          <div class="w-2/3 flex flex-col bg-white dark:bg-gray-800 shadow-lg p-4 rounded-lg" style="width:80%;">
+            <div id="chatHeader" class="text-lg font-semibold border-b dark:border-gray-600 pb-2">
+              Select a user to chat
+            </div>
+  
+            <div id="chatBox" class="flex-1 p-2 overflow-y-auto bg-gray-50 dark:bg-gray-700 rounded-lg mt-2">
+              <p class="text-gray-500 dark:text-gray-300 font-bold text-center">Select user to start a conversation...</p>
+            </div>
+  
+            <!-- Message Input -->
+            <div class="mt-4 flex">
+              <input type="text" id="messageInput"
+                     class="flex-1 p-2 border rounded-lg bg-white dark:bg-gray-600 dark:text-white dark:border-gray-500"
+                     placeholder="Type a message...">
+  
+              <button onclick="sendMessage()" id="send-btn"
+                      style="display:none;"
+                      class="ml-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+  
+              <button id="file-btn" onclick="document.getElementById('fileInput').click()"
+                      style="display:none"
+                      class="ml-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
+                <i class="fas fa-paperclip"></i>
+              </button>
+  
+              <input type="file" id="fileInput" class="hidden">
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    <div id="ai-assistant-button" class="fixed bottom-4 right-4 z-50">
+        <button onclick="toggleAIAssistant()" class="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none">
+          🤖
+        </button>
+      </div>
+      
+      <!-- AI Assistant Chat Box -->
+      <div id="ai-assistant-box" class="fixed bottom-20 right-4 w-80 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg z-50 hidden">
+        <div class="flex justify-between items-center bg-blue-600 text-white px-4 py-2 rounded-t-lg">
+          <h3 class="font-semibold">AI Assistant</h3>
+          <button onclick="toggleAIAssistant()" class="text-white hover:text-gray-200">✖</button>
+        </div>
+        <div id="ai-chat-log" class="p-4 max-h-60 overflow-y-auto text-sm space-y-2 text-gray-800 dark:text-gray-100">
+          <p class="text-gray-500 dark:text-gray-400 italic">Ask me anything about your tasks or projects...</p>
+        </div>
+        <form onsubmit="sendAIMessage(event)" class="flex items-center p-2 border-t dark:border-gray-700">
+          <input id="ai-user-input" type="text" placeholder="Type a message..." class="flex-1 px-2 py-1 rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600 text-sm focus:outline-none">
+          <button type="submit" class="ml-2 text-blue-600 dark:text-blue-400 font-bold">Send</button>
+        </form>
+      </div>
+  
+    <script>
+      function toggleDarkMode() {
+        document.documentElement.classList.toggle('dark');
+      }
+    </script>
+  </body>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+    <script>
+                function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+        let socket = null;
+        let room_id = null;
+        let selectedUserId
+        const fileInput = document.getElementById('fileInput')
+        
+    
+        function openChat(userId, username) {
+            selectedUserId = userId;
+            console.log(selectedUserId)
+            document.getElementById('send-btn').style.display="block";
+            document.getElementById('file-btn').style.display="block";
+            document.getElementById("chatHeader").innerText = "Chat with " + username;
+            document.getElementById("chatBox").innerHTML = `<p class='text-gray-500' id='loadingMessage'>Loading chat with ${username}...</p>`;
+            setTimeout(() => {
+                let loadingMessage = document.getElementById("loadingMessage");
+                if (loadingMessage) {
+                    loadingMessage.remove();
+                }
+            }, 1000);
+    
+            fetch("/get_or_create_room", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ receiver_id: userId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+                if (data.success) {
+                    current_user=data.current_user
+                    room_id = data.room_id;
+                    connectWebSocket(room_id,current_user);
+                }
+            });
+        }
+    
+        function connectWebSocket(room_id,current_user) {
+       socket = new WebSocket(`ws://localhost:8000/ws/chat/${room_id}/`);
+
+    socket.onopen = function () {
+        console.log("Connected to WebSocket Room:", room_id);
+    };
+    socket.onmessage = function(event) {
+    let data = JSON.parse(event.data);
+    console.log("Received Data:", data);
+    let messageElement = document.getElementById(`message-${data.message_id}`);
+
+    let chatBox = document.getElementById("chatBox");
+    if (data.action === "delete_message") {
+        let messageElement = document.getElementById(`message-${data.message_id}`);
+        console.log(messageElement)
+        if (messageElement) {
+            messageElement.remove();
+        }
+        return;
+    }
+
+        if (data.action === "update_message") {
+        // Find the existing message in the UI and update it
+        let messageElement = document.getElementById(`message-${data.message_id}`);
+
+        if (messageElement) {
+            if (data.message.startsWith("uploads/")) {
+                // If it's a file message, update file link & caption
+                let fileUrl = `${window.location.origin}/static/${data.message}`;
+                let fileMessageDiv = messageElement.querySelector(".file-message");
+
+                if (!fileMessageDiv) {
+                    // If no file-message div exists, create one
+                    messageElement.innerHTML = `
+                        <div class="file-message">
+                            <a href="${fileUrl}" target="_blank">
+                                <i class="fas fa-file-alt"></i> ${data.message}
+                            </a>
+                            ${data.caption ? `<p class="message-content">${data.caption}</p>` : ""}
+                        </div>
+                    `;
+                } else {
+                    // Update existing file-message div
+                    let fileLink = fileMessageDiv.querySelector("a");
+                    fileLink.href = fileUrl;
+                    fileLink.innerHTML = `<i class="fas fa-file-alt"></i> ${data.message}`;
+
+                    let captionElement = fileMessageDiv.querySelector("p");
+                    if (data.caption) {
+                        if (captionElement) {
+                            captionElement.innerText = data.caption;
+                        } else {
+                            let newCaption = document.createElement("p");
+                            newCaption.className = "message-content";
+                            newCaption.innerText = data.caption;
+                            fileMessageDiv.appendChild(newCaption);
+                        }
+                    } else if (captionElement) {
+                        captionElement.remove(); // Remove caption if it's deleted
+                    }
+                }
+            } else {
+                // Update text message normally
+                let messageContent = messageElement.querySelector(".message-content");
+                if (messageContent) {
+                    messageContent.innerText = data.message;
+                }
+            }
+        }
+        return; // Stop further execution to prevent duplicate messages
+    }
+    let existingMessage = document.getElementById(`message-${data.message_id}`);
+if (existingMessage) {
+    return;  // Prevent duplicate messages from being appended
+}
+
+    // Create a new message div if it's a new message
+    let messageDiv = document.createElement("div");
+    messageDiv.classList.add("message");
+    messageDiv.style.marginTop="2%";
+    messageDiv.id = `message-${data.message_id}`; // Assign unique ID for future updates
+
+    if (data.sender === current_user) {  
+        messageDiv.classList.add("self");  
+    } else {
+        messageDiv.classList.add("other");  
+    }
+    
+
+    // Create message content div
+    let messageContent = document.createElement("div");
+    messageContent.className = "message-content";
+    messageContent.innerText = data.message;
+    messageDiv.appendChild(messageContent);
+
+    if (data.message.startsWith("uploads/")) {
+    let fileUrl = `${window.location.origin}/static/${data.message}`;
+    messageDiv.innerHTML = `
+        <div class="file-message">
+            <a href="${fileUrl}" style="color:blue" target="_blank">
+                <i class="fas fa-file-alt"></i> ${data.message}
+            </a>
+            ${data.caption ? `<p class="message-content">${data.caption}</p>` : ""}
+        </div>
+    `;
+} else {
+    // Create normal text message content
+    let messageContent = document.createElement("div");
+    messageContent.className = "message-content";
+    messageContent.innerText = data.message;
+    // messageDiv.appendChild(messageContent);
+}
+
+        if (data.sender === current_user) {
+        const optionElement = document.createElement("div");
+        optionElement.className = "options";
+        optionElement.innerHTML = "&#x22EE;"; 
+
+        const dropdownMenu = document.createElement("div");
+        dropdownMenu.className = "dropdown-menu";
+
+        const editOption = document.createElement("div");
+        editOption.textContent = "Edit";
+        editOption.className = "dropdown-item";
+        editOption.onclick = function () {
+            EditMessage(data.message_id, data.message);
+        };
+
+        const deleteOption = document.createElement("div");
+        deleteOption.textContent = "Delete";
+        deleteOption.className = "dropdown-item";
+        deleteOption.onclick = function () {
+            DeleteMessage(data.message_id);
+        };
+
+        dropdownMenu.appendChild(editOption);
+        dropdownMenu.appendChild(deleteOption);
+
+        optionElement.appendChild(dropdownMenu);
+        optionElement.onclick = function (event) {
+            event.stopPropagation();
+            dropdownMenu.style.display = dropdownMenu.style.display === "none" ? "block" : "none";
+        };
+
+        document.addEventListener("click", function () {
+            dropdownMenu.style.display = "none";
+        });
+
+        messageDiv.appendChild(optionElement);
+    }
+
+    
+    // Append message to chatBox
+    chatBox.appendChild(messageDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;  
+};
+
+    socket.onclose = function () {
+        console.log("Disconnected from WebSocket");
+    };
+}
+
+function getCookie(name) {
+    let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? match[2] : "";
+}
+function sendMessage() {
+    if (!selectedUserId) {
+        alert("Select a user first!");
+        return;
+    }
+
+    let messageInput = document.getElementById("messageInput");
+    let fileInput = document.getElementById("fileInput");
+    let messageText = messageInput.value.trim();
+    console.log(messageText)
+    let file = fileInput.files[0];
+    console.log(file)
+
+    if (!messageText && !file) return; 
+
+    if (file) {
+        let formData = new FormData();
+        formData.append("file", file);
+        formData.append("receiver_id", selectedUserId);
+        formData.append("caption",messageText)
+
+        fetch("/upload_chat_file", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let fileUrl = data.file_url; 
+                socket.send(JSON.stringify({
+                    sender: "{{ request.user.username }}",
+                    message: messageText,
+                    file: fileUrl
+                }));
+            } else {
+                alert("File upload failed.");
+            }
+        })
+        .catch(error => console.error("Error uploading file:", error));
+    } else {
+        socket.send(JSON.stringify({
+            sender: "{{ request.user.username }}",
+            message: messageText
+        }));
+    }
+
+    messageInput.value = "";
+    fileInput.value = ""; 
+}
+function EditMessage(message_id, oldContent) {
+    console.log("Editing message ID:", message_id);
+    console.log("Old content:", oldContent);
+
+    document.querySelectorAll(".dropdown-menu").forEach(menu => {
+        menu.style.display = "none";
+    });
+
+    let messageInput = document.getElementById("messageInput");
+    let fileInput = document.getElementById("fileInput");
+    let sendMessageButton = document.getElementById("send-btn");
+
+    // Check if the old content is a file (starts with 'uploads/')
+    let isFileMessage = oldContent.startsWith("uploads/");
+
+    let existingCaption = "";
+    if (isFileMessage) {
+        let messageElement = document.getElementById(`message-${message_id}`);
+        let captionElement = messageElement.querySelector("p");
+        existingCaption = captionElement ? captionElement.innerText : "";
+        messageInput.value = existingCaption; // Pre-fill input with existing caption
+    } else {
+        messageInput.value = oldContent; // Pre-fill input with old text
+    }
+
+    messageInput.focus();
+    sendMessageButton.setAttribute("data-edit-id", message_id);
+
+    sendMessageButton.onclick = function () {
+        let updatedContent = messageInput.value.trim();
+        let newFile = fileInput.files[0];
+
+        if (newFile) {
+            console.log("Updating file...");
+            // Case 1: Updating the file (with optional caption)
+            let formData = new FormData();
+            formData.append("file", newFile);
+            formData.append("message_id", message_id);
+            formData.append("caption", updatedContent);
+
+            fetch("/upload_chat_file", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    socket.send(JSON.stringify({
+                        action: "update_message",
+                        message_id: message_id,
+                        message: data.file_url, // Update with new file URL
+                        caption: updatedContent // Update caption if provided
+                    }));
+                } else {
+                    alert("File upload failed.");
+                }
+            })
+            .catch(error => console.error("Error uploading file:", error));
+
+        } else if (isFileMessage && updatedContent !== existingCaption) {
+            console.log("Updating caption...");
+            // Case 2: Updating only the caption (for file messages)
+            socket.send(JSON.stringify({
+                action: "update_message",
+                message_id: message_id,
+                message: oldContent, // Keep the same file
+                caption: updatedContent
+            }));
+
+        } else if (!isFileMessage && updatedContent !== oldContent) {
+            console.log("Updating text message...");
+            // Case 3: Updating only text message
+            socket.send(JSON.stringify({
+                action: "update_message",
+                message_id: message_id,
+                message: updatedContent, // Update with new text
+                caption: "" // No caption needed
+            }));
+        }
+
+        // Reset input fields
+        messageInput.value = "";
+        fileInput.value = "";
+        sendMessageButton.removeAttribute("data-edit-id");
+        sendMessageButton.onclick = sendMessage;
+    };
+}
+
+function DeleteMessage(message_id) {
+    // Hide all dropdown menus
+    document.querySelectorAll(".dropdown-menu").forEach(menu => {
+        menu.style.display = "none";
+    });
+
+    // Confirm before deleting
+    if (!confirm("Are you sure you want to delete this message?")) {
+        return;
+    }
+
+    // Send WebSocket request to delete message in real-time
+    socket.send(JSON.stringify({
+        action: "delete_message",
+        message_id: message_id
+    }));
+
+    // Remove the message instantly from the UI
+    let messageElement = document.getElementById(`message-${message_id}`);
+    if (messageElement) {
+        messageElement.remove();
+    }
+}
+function toggleAIAssistant() {
+  const chatBox = document.getElementById("ai-assistant-box");
+  chatBox.classList.toggle("hidden");
+}
+
+async function sendAIMessage(event) {
+  event.preventDefault();
+  const input = document.getElementById("ai-user-input");
+  const message = input.value.trim();
+  if (!message) return;
+
+  const chatLog = document.getElementById("ai-chat-log");
+  chatLog.innerHTML += `<div class="text-right"><strong>You:</strong> ${message}</div>`;
+  input.value = "";
+
+  try {
+    const response = await fetch("/ai_assistant", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken")
+      },
+      body: JSON.stringify({ message })
+    });
+
+    const data = await response.json();
+    chatLog.innerHTML += `<div><strong>AI:</strong> ${data.reply}</div>`;
+    chatLog.scrollTop = chatLog.scrollHeight;
+  } catch (error) {
+    chatLog.innerHTML += `<div class="text-red-500">Error fetching AI response.</div>`;
+  }
+}
+
+console.log("Received Data:", data);
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+function toggleSettings(event) {
+    event.stopPropagation(); // Prevent the event from reaching the document listener
+    const dropdown = document.getElementById("settings-dropdown");
+    dropdown.classList.toggle("hidden");
+}
+document.addEventListener("click", function (event) {
+    const button = document.getElementById("settings-menu");
+    const dropdown = document.getElementById("settings-dropdown");
+    if (!button.contains(event.target) && !dropdown.contains(event.target)) {
+        dropdown.classList.add("hidden");
+    }
+});
+
+    </script>
+    
+
+</body>
+</html>

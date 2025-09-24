@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-200 to-purple-400">
+    <nav class="bg-slate-900 p-4 flex justify-between items-center shadow-lg">
+        <h1 class="text-white text-2xl font-bold">Admin Dashboard</h1>
+        <div class="relative inline-block text-left">
+            <!-- Settings Icon -->
+            <button id="settingsBtn" class="text-white hover:text-gray-300 focus:outline-none">
+                <i class="fas fa-cog text-2xl"></i> <!-- FontAwesome settings icon -->
+            </button>
+        
+            <!-- Dropdown Menu (Hidden by Default) -->
+            <div id="dropdownMenu" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg">
+                <a href="/logout" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Logout</a>
+                {%if manager_role == 'admin' %}
+                <a href="/users" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Users</a>
+                {% endif %}
+            </div>
+        </div>
+
+    </nav>
+
+    <div class="container mx-auto mt-6 p-6 bg-white rounded-lg shadow-lg">
+        <a href="/signup" class="bg-blue-600 hover:bg-blue-800 text-white px-4 py-2 rounded-lg shadow-md inline-block">
+            New
+        </a>
+        
+        <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">Users</h1>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white shadow-md rounded-lg">
+                <thead>
+                    <tr class="bg-blue-600 text-white">
+                        <th class="py-3 px-6 text-left">Username</th>
+                        <th class="py-3 px-6 text-left">Email</th>
+                        <th class="py-3 px-6 text-left">Role</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="border-b hover:bg-gray-100 transition">
+                        <td class="py-3 px-6">{{ user.username }}</td>
+                        <td class="py-3 px-6">{{ user.email }}</td>
+                        <td class="py-3 px-6 font-semibold">
+                            {% if user.role == "admin" %}
+                                <span class="text-red-600">Admin</span>
+                            {% elif user.role == "manager" %}
+                                <span class="text-blue-600">Manager</span>
+                            {% else %}
+                                <span class="text-green-600">Developer</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="py-4 text-center text-gray-500">No users found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div id="ai-assistant-button" class="fixed bottom-4 right-4 z-50">
+        <button onclick="toggleAIAssistant()" class="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none">
+          🤖
+        </button>
+      </div>
+      
+      <!-- AI Assistant Chat Box -->
+      <div id="ai-assistant-box" class="fixed bottom-20 right-4 w-80 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg z-50 hidden">
+        <div class="flex justify-between items-center bg-blue-600 text-white px-4 py-2 rounded-t-lg">
+          <h3 class="font-semibold">AI Assistant</h3>
+          <button onclick="toggleAIAssistant()" class="text-white hover:text-gray-200">✖</button>
+        </div>
+        <div id="ai-chat-log" class="p-4 max-h-60 overflow-y-auto text-sm space-y-2 text-gray-800 dark:text-gray-100">
+          <p class="text-gray-500 dark:text-gray-400 italic">Ask me anything about your tasks or projects...</p>
+        </div>
+        <form onsubmit="sendAIMessage(event)" class="flex items-center p-2 border-t dark:border-gray-700">
+          <input id="ai-user-input" type="text" placeholder="Type a message..." class="flex-1 px-2 py-1 rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600 text-sm focus:outline-none">
+          <button type="submit" class="ml-2 text-blue-600 dark:text-blue-400 font-bold">Send</button>
+        </form>
+      </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+            document.addEventListener("DOMContentLoaded", function () {
+        const settingsBtn = document.getElementById("settingsBtn");
+        const dropdownMenu = document.getElementById("dropdownMenu");
+
+        settingsBtn.addEventListener("click", function () {
+            dropdownMenu.classList.toggle("hidden");
+        });
+
+        // Close dropdown if clicked outside
+        document.addEventListener("click", function (event) {
+            if (!settingsBtn.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                dropdownMenu.classList.add("hidden");
+            }
+        });
+    });
+    function toggleAIAssistant() {
+  const chatBox = document.getElementById("ai-assistant-box");
+  chatBox.classList.toggle("hidden");
+}
+
+async function sendAIMessage(event) {
+  event.preventDefault();
+  const input = document.getElementById("ai-user-input");
+  const message = input.value.trim();
+  if (!message) return;
+
+  const chatLog = document.getElementById("ai-chat-log");
+  chatLog.innerHTML += `<div class="text-right"><strong>You:</strong> ${message}</div>`;
+  input.value = "";
+
+  try {
+    const response = await fetch("/ai_assistant", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken")
+      },
+      body: JSON.stringify({ message })
+    });
+
+    const data = await response.json();
+    chatLog.innerHTML += `<div><strong>AI:</strong> ${data.reply}</div>`;
+    chatLog.scrollTop = chatLog.scrollHeight;
+  } catch (error) {
+    chatLog.innerHTML += `<div class="text-red-500">Error fetching AI response.</div>`;
+  }
+}
+
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+    </script>
+
+</body>
+</html>

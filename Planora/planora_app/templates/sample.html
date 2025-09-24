@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% load static %} 
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="{% static 'icon.png' %}" type="image/png">
+
+    <title>Planora - Plan & Work</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+      integrity="sha512-xodZBNTC5n17Xt2a2eZVT/6aPzUp3NU6M5Y4RXk+5ub9J7x65w1+MTF6uYFv0z4pO5S7RWn7C+Xl5F2T2P2Hjw=="
+      crossorigin=""
+    /> -->
+
+  </head>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: "Roboto", sans-serif;
+      background-color: #eef2f3;
+      color: #333;
+      line-height: 1.6;
+      font-size: 16px;
+      overflow:hidden;
+    }
+    header {
+      background: linear-gradient(45deg, black, transparent);
+      text-align: center;
+      padding: 15rem 2rem;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .animated-title {
+      font-size: 6.5rem;
+      margin-bottom: 1rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      animation: titleFadeIn 5s ease-out;
+    }
+    @keyframes titleFadeIn {
+      0% {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    header p {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    nav {
+      background-color: #2c3e50;
+      padding: 1rem;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+    }
+    nav ul li {
+      margin: 0 1rem;
+    }
+    nav ul li a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: color 0.3s, transform 0.3s;
+    }
+    nav ul li a:hover {
+      color: #ffcc00;
+      transform: scale(1.05);
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+  <body>
+    <nav>
+      <ul>
+        <li><a href="/login">Login</a></li>
+        <li><a href="#">About</a></li>
+      </ul>
+    </nav>
+
+    <header class="text-white text-center p-32">
+      <h1 class="animated-title">Planora</h1>
+      <p>
+        A Smart Project Management Solution for Teams of Any Size.
+      </p>
+      <p>
+        Track, Assign, and Manage Projects Seamlessly with Real-time Dashboards.
+      </p>
+    </header>
+
+    <!-- <script
+      src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+      integrity="sha512-nMMMyK3qQKx0tmjqw6V+v74Jfjhf2bU5KxtzHcUbS8r5K8z8mW3u3Zcw6WvRZ5vI+fKVDQZy+Y5Jc0NU6O8y6Q=="
+      crossorigin=""
+    ></script> -->
+
+    <!-- <script src="scripts.js"></script> -->
+  </body>
+</html>

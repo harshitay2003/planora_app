@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager - Projects & Tasks</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-gray-100">
+
+    <!-- Navigation -->
+    <nav class="bg-gray-900 p-4 flex justify-between items-center shadow-lg">
+        <h1 class="text-white text-2xl font-bold">Manager Dashboard</h1>
+        <a href="{% url 'manager_dashboard' %}" class="text-blue-400 hover:underline">⬅ Back to Dashboard</a>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto mt-6 p-6 bg-white rounded-lg shadow-lg">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">Projects & Tasks</h1>
+
+        {% for project in projects %}
+        <div class="bg-gray-100 p-5 rounded-lg shadow-md mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">{{ project.name }}</h2>
+            <p class="text-gray-700 mt-1"><strong>Description:</strong> {{ project.description }}</p>
+            <p class="text-gray-600"><strong>Due Date:</strong> {{ project.due_date }}</p>
+
+            <h3 class="text-lg font-semibold text-gray-800 mt-4">Tasks:</h3>
+            <div class="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mt-2">
+                {% for task in tasks %}
+                    {% if task.project == project %}
+                    <div class="bg-white p-4 rounded-lg shadow-md border border-gray-300">
+                        <h4 class="text-lg font-bold text-gray-800">{{ task.title }}</h4>
+                        <p class="text-gray-700 mt-1">{{ task.description }}</p>
+                        <p class="text-gray-600"><strong>Assigned Developer:</strong> {{ task.assigned_to.username }}</p>
+                        <p class="text-gray-500 text-sm"><strong>Due Date:</strong> {{ task.due_date }}</p>
+                        <p class="text-sm font-semibold mt-2">
+                            Status: 
+                            <span class="px-2 py-1 rounded-lg 
+                                {% if task.status == 'Completed' %} bg-green-500 text-white 
+                                {% elif task.status == 'In Progress' %} bg-yellow-500 text-white 
+                                {% else %} bg-red-500 text-white {% endif %}">
+                                {{ task.status }}
+                            </span>
+                        </p>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                    <p class="text-gray-600">No tasks assigned yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-gray-600 text-center">No projects assigned to you.</p>
+        {% endfor %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3

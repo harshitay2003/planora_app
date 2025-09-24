@@ -1,0 +1,84 @@
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    {% load static %} 
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="icon" href="{% static 'icon.png' %}" type="image/png">
+
+      <title>Planora - Plan & Work</title>
+      <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- SweetAlert Library -->
+    </head>
+    <body class="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-200 to-purple-400 relative pb-32">
+      <div class="absolute top-4 left-6 flex justify-center items-center gap-2">
+        <!-- <svg height="200px" width="200px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 492.481 492.481" xml:space="preserve" fill="#000000" class='w-6 h-6'><linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="-36.6002" y1="621.3422" x2="-17.2782" y2="547.7642" gradientTransform="matrix(7.8769 0 0 -7.8769 404.0846 4917.9966)"> <stop offset="0" style="stop-color:#29D3DA"></stop> <stop offset="0.519" style="stop-color:#0077FF"></stop> <stop offset="0.999" style="stop-color:#064093"></stop> <stop offset="1" style="stop-color:#084698"></stop> </linearGradient> <polygon style="fill:url(#SVGID_1_);" points="25.687,297.141 135.735,0 271.455,0 161.398,297.141 "></polygon> <linearGradient id="SVGID_2_" gradientUnits="userSpaceOnUse" x1="-27.0735" y1="620.7541" x2="-11.7045" y2="560.3241" gradientTransform="matrix(7.8769 0 0 -7.8769 404.0846 4917.9966)"> <stop offset="0.012" style="stop-color:#E0B386"></stop> <stop offset="0.519" style="stop-color:#DA498C"></stop> <stop offset="1" style="stop-color:#961484"></stop> </linearGradient> <polygon style="fill:url(#SVGID_2_);" points="123.337,394.807 233.409,97.674 369.144,97.674 259.072,394.807 "></polygon> <linearGradient id="SVGID_3_" gradientUnits="userSpaceOnUse" x1="14.0324" y1="554.688" x2="-10.4176" y2="584.028" gradientTransform="matrix(7.8769 0 0 -7.8769 404.0846 4917.9966)"> <stop offset="0" style="stop-color:#29D3DA"></stop> <stop offset="0.519" style="stop-color:#0077FF"></stop> <stop offset="0.999" style="stop-color:#064093"></stop> <stop offset="1" style="stop-color:#084698"></stop> </linearGradient> <polygon style="fill:url(#SVGID_3_);" points="221.026,492.481 331.083,195.348 466.794,195.348 356.746,492.481 "></polygon></svg> -->
+        <!-- <p class="text-2xl text-indigo-500 tracking-wide font-bold">Logo</p> -->
+      </div>
+      <div class="w-full rounded-lg bg-slate-900 p-10 text-sm text-indigo-300 sm:w-96 max-w-96 mt-18">
+        <h1 class="mb-4 text-center text-3xl font-semibold text-white">Login</h1>
+        <p class="mb-6 text-center text-sm">Welcome Back!</p>
+        <form action="/login" method="POST" onsubmit="handleEvent(event)">
+          {% csrf_token %}
+          <div class="mb-5 flex gap-3 rounded-full bg-[#333A5c] px-6 py-3">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4"><path d="M3 8L8.44992 11.6333C9.73295 12.4886 10.3745 12.9163 11.0678 13.0825C11.6806 13.2293 12.3194 13.2293 12.9322 13.0825C13.6255 12.9163 14.2671 12.4886 15.5501 11.6333L21 8M6.2 19H17.8C18.9201 19 19.4802 19 19.908 18.782C20.2843 18.5903 20.5903 18.2843 20.782 17.908C21 17.4802 21 16.9201 21 15.8V8.2C21 7.0799 21 6.51984 20.782 6.09202C20.5903 5.71569 20.2843 5.40973 19.908 5.21799C19.4802 5 18.9201 5 17.8 5H6.2C5.0799 5 4.51984 5 4.09202 5.21799C3.71569 5.40973 3.40973 5.71569 3.21799 6.09202C3 6.51984 3 7.07989 3 8.2V15.8C3 16.9201 3 17.4802 3.21799 17.908C3.40973 18.2843 3.71569 18.5903 4.09202 18.782C4.51984 19 5.07989 19 6.2 19Z" stroke="#64748b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            <input type="text" name="username" placeholder="User Name" class="border-none outline-none" />
+          </div>
+          <div class="mb-5 flex gap-3 rounded-full bg-[#333A5c] px-6 py-3">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4"><path d="M12 14.5V16.5M7 10.0288C7.47142 10 8.05259 10 8.8 10H15.2C15.9474 10 16.5286 10 17 10.0288M7 10.0288C6.41168 10.0647 5.99429 10.1455 5.63803 10.327C5.07354 10.6146 4.6146 11.0735 4.32698 11.638C4 12.2798 4 13.1198 4 14.8V16.2C4 17.8802 4 18.7202 4.32698 19.362C4.6146 19.9265 5.07354 20.3854 5.63803 20.673C6.27976 21 7.11984 21 8.8 21H15.2C16.8802 21 17.7202 21 18.362 20.673C18.9265 20.3854 19.3854 19.9265 19.673 19.362C20 18.7202 20 17.8802 20 16.2V14.8C20 13.1198 20 12.2798 19.673 11.638C19.3854 11.0735 18.9265 10.6146 18.362 10.327C18.0057 10.1455 17.5883 10.0647 17 10.0288M7 10.0288V8C7 5.23858 9.23858 3 12 3C14.7614 3 17 5.23858 17 8V10.0288" stroke="#64748b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            <input type="password" name="password" placeholder="Password" class="border-none outline-none" />
+          </div>
+          <p class="mb-6 mr-2 text-sm flex justify-end cursor-pointer"><a href="/forgot_password"  class="text-blue-400">Forgot Password?</a></p>
+          <button class="w-full rounded-full bg-gradient-to-r from-indigo-400 to-indigo-900 py-3 font-medium tracking-wide text-white cursor-pointer">Login</button>
+        </form>
+        <p class="mt-4 mb-7 text-center text-sm text-slate-400"> <a  class="hover:underline text-blue-400"></a></p>
+        <span class="block w-full h-0.5 bg-gradient-to-r from-slate-900 via-indigo-500 to-slate-900"></span>
+
+      </div>
+  <script>
+      function handleEvent(event) {
+          event.preventDefault();
+          const formData = new FormData(event.target);
+
+          fetch('/login', {
+              method: 'POST',
+              body: formData,
+
+          })
+          .then(response => response.json())
+        .then(data => {
+            console.log("data-:", data);
+
+            // Handle error response
+            if (data.error) {
+                Swal.fire("Invalid Credentials", data.error, "error"); // SweetAlert for errors
+            } else {
+                // On success, store tokens in localStorage (or HttpOnly Cookies if preferred)
+                localStorage.setItem('access_token', data.access);  // Store the access token
+                localStorage.setItem('refresh_token', data.refresh);  // Store the refresh token
+
+                // Optionally store user information (username, role) if needed later
+                localStorage.setItem('username', data.user.username);
+                localStorage.setItem('role', data.user.role);
+
+                // Show success message and redirect
+                Swal.fire({
+                    title: "Login Successful!",
+                    text: data.message || "You have successfully logged in.",
+                    icon: "success",
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.href = "/projects";  // Redirect to the protected page
+                });
+            }
+        })
+              .catch(error => {
+                  Swal.fire("Error", "Something went wrong! Please try again.", "error");
+                  console.error('Error:', error);
+              });
+      }
+  </script>
+  </body>
+  </html>

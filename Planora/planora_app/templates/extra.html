@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-center items-center min-h-screen p-4">
+
+    <div class="bg-white shadow-lg rounded-2xl p-8 max-w-2xl w-full">
+        <h1 class="text-3xl font-semibold text-gray-800 text-center mb-6">📋 Task Details</h1>
+
+        <div class="space-y-4">
+            <p class="flex justify-between border-b pb-2"><strong class="text-gray-600">Title:</strong> <span class="font-medium text-gray-800">{{task.title}}</span></p>
+            <p class="flex justify-between border-b pb-2"><strong class="text-gray-600">Description:</strong> <span class="text-gray-700">{{task.description}}</span></p>
+            <p class="flex justify-between border-b pb-2"><strong class="text-gray-600">Assigned To:</strong> <span class="text-gray-700">{{task.assigned_to}}</span></p>
+            <p class="flex justify-between border-b pb-2"><strong class="text-gray-600">Assigned By:</strong> <span class="text-gray-700">{{task.assigned_by}}</span></p>
+
+            <p class="flex justify-between border-b pb-2">
+                <strong class="text-gray-600">Status:</strong>
+                <span id="task-status" class="font-medium px-2 py-1 rounded-lg bg-blue-100 text-blue-700">
+                    {{task.status}}
+                </span>
+            </p>
+
+            <p class="flex justify-between border-b pb-2"><strong class="text-gray-600">Project:</strong> <span class="text-gray-700">{{task.project}}</span></p>
+            <p class="flex justify-between border-b pb-2"><strong class="text-gray-600">Hours to Complete:</strong> <span class="text-gray-700">{{task.estimated_hours}}</span></p>
+
+            <!-- Timer Display -->
+            <p class="flex justify-between border-b pb-2">
+                <strong class="text-gray-600">Time Remaining:</strong>
+                <span id="countdown-timer" class="font-medium text-red-600 text-lg">Not Started</span>
+            </p>
+
+            <p class="flex justify-between border-b pb-2"><strong class="text-gray-600">Created At:</strong> <span class="text-gray-700">{{task.created_at}}</span></p>
+        </div>
+
+        <!-- Buttons -->
+        <div class="mt-6 flex justify-between">
+            <a href="/dashboard" class="px-5 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition duration-200">
+                🔙 Back to Dashboard
+            </a>
+
+            <button id="start-task" class="px-5 py-2 bg-green-500 text-white rounded-lg shadow-md hover:bg-green-600 transition duration-200">
+                ▶️ Start Task
+            </button>
+        </div>
+    </div>
+
+    <script>
+let estimatedHours = parseInt("{{task.estimated_hours}}") || 0; 
+let startTimeRaw = "{{task.start_time}}";
+let endTimeRaw = "{{task.end_time}}";
+let status = "{{task.status}}";
+let countdownInterval;
+
+console.log("Debug: Estimated Hours:", estimatedHours);
+console.log("Debug: Raw Start Time:", startTimeRaw);
+console.log("Debug: Raw End Time:", endTimeRaw);
+
+
+// Check if localStorage has previous start/end times
+let storedStartTime = localStorage.getItem("startTime_{{task.id}}");
+console.log(storedStartTime)
+let storedEndTime = localStorage.getItem("endTime_{{task.id}}");
+console.log(storedEndTime)
+
+// Convert startTime and endTime safely
+let startTime = startTimeRaw && startTimeRaw !== "None" ? new Date(startTimeRaw) : storedStartTime ? new Date(storedStartTime) : null;
+console.log("start time-:",startTime)
+let endTime = endTimeRaw && endTimeRaw !== "None" ? new Date(endTimeRaw) : storedEndTime ? new Date(storedEndTime) : null;
+console.log("end time-:",endTime)
+
+// If valid, store them
+if (startTime && !isNaN(startTime.getTime())) {
+    localStorage.setItem("startTime_{{task.id}}", startTime.toISOString());
+} else {
+    startTime = null;
+}
+
+if (endTime && !isNaN(endTime.getTime())) {
+    localStorage.setItem("endTime_{{task.id}}", endTime.toISOString());
+} else {
+    endTime = null;
+}
+
+function updateTimer() {
+    console.log("update_timer")
+    if (!startTime || isNaN(startTime.getTime()) || !endTime || isNaN(endTime.getTime())) {
+        document.getElementById("countdown-timer").textContent = "⏳ Not Started";
+        document.getElementById("start-task").style.display = "block"; // Show Start Button
+        return;
+    }
+
+    document.getElementById("start-task").style.display = "none"; // Hide Start Button when timer is running
+
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    countdownInterval = setInterval(() => {
+        let now = new Date().getTime();
+        let remainingTime = endTime - now;
+
+        if (remainingTime <= 0) {
+            document.getElementById("countdown-timer").textContent = "⏳ Time's Up!";
+            clearInterval(countdownInterval);
+            return;
+        }
+
+        let hours = Math.floor(remainingTime / (1000 * 60 * 60));
+        let minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+
+        document.getElementById("countdown-timer").textContent = `${hours}h ${minutes}m ${seconds}s`;
+    }, 1000);
+}
+document.getElementById("start-task").addEventListener("click", function() {
+    if (startTime && endTime) {
+        console.log("Task already started, skipping request.");
+        return;
+    }
+
+    fetch(`/start_task/{{task.id}}`, {
+        method: 'POST',
+        headers: { "X-CSRFToken": "{{ csrf_token }}" },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            startTime = new Date();
+            endTime = new Date(startTime);
+            endTime.setHours(endTime.getHours() + estimatedHours);
+
+            console.log("Task started at:", startTime);
+            console.log("New End Time:", endTime);
+
+            localStorage.setItem("startTime_{{task.id}}", startTime.toISOString());
+            localStorage.setItem("endTime_{{task.id}}", endTime.toISOString());
+
+            document.getElementById("task-status").textContent = "In Progress";
+            document.getElementById("start-task").style.display = "none"; // Hide Start Button
+            updateTimer();
+        }
+    })
+    .catch(error => console.error("Error:", error));
+});
+
+// ** Auto-restore Timer if Task is Already In Progress **
+if (startTime && endTime) {
+    console.log("Task already in progress, restoring timer.");
+    document.getElementById("start-task").style.display = "none"; // Hide Start Button
+    updateTimer();
+} else {
+    document.getElementById("countdown-timer").textContent = "⏳ Not Started";
+    document.getElementById("start-task").style.display = "block"; // Show Start Button
+}
+
+    </script>
+
+</body>
+</html>

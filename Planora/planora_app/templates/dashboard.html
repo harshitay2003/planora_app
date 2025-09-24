@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %} 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{% static 'icon.png' %}" type="image/png">
+
+    <title>Planora - Plan & Work</title>
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+
+</head>
+    <body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-white">
+        <div class="flex h-screen overflow-hidden">
+            <!-- Sidebar -->
+            <aside class="w-64 bg-white dark:bg-gray-800 shadow-md p-4 hidden md:block md:flex-shrink-0">
+                {% if request.user.role == 'admin' %} 
+                <h2 class="text-2xl font-bold mb-6" id="role-title">🛠️ Admin</h2>
+                
+                {% elif request.user.role == 'manager' %}
+                <h2 class="text-2xl font-bold mb-6" id="role-title">📂 Manager</h2>
+                
+                {% else %}
+                <h2 class="text-2xl font-bold mb-6" id="role-title">💻 Developer</h2>
+        
+        
+                {% endif %}
+              <!-- <h2 class="text-2xl font-bold mb-6" id="role-title">🔧 Admin</h2> -->
+              <nav class="space-y-4 text-sm">
+                <a href="/" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300">🏠 Home</a>
+        
+                <a href="/projects" class="block px-3 py-2 rounded bg-gray-200 dark:bg-gray-700 font-medium text-gray-900 dark:text-white">📁 Projects</a>
+                <a href="/calender_page" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300">🗓️ Calendar</a>
+                <a href="/chat" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300">💬 Chat</a>
+                <!-- <a href="#" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300">📊 Reports</a> -->
+                <a href="/notifications_view" class="relative block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300">
+                  🔔 Notifications
+                  <span id="unread-badge" class="absolute top-1 right-2 bg-red-600 text-white font-semibold px-2 py-0.5 rounded-full hidden" style="line-height:1.5rem; font-size:0.75rem;">0</span>
+                </a>
+                <div class="relative">
+                  <button onclick="toggleSettings()" id="settings-menu" class="w-full text-left block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium">
+                      ⚙️ Settings
+                  </button>
+                  <div id="settings-dropdown" class="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 shadow-lg rounded-md hidden z-50">
+                      {% if request.user.role == 'admin' %}
+                      <a href="/users" class="block px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">👥 Manage Users</a>
+                      {% endif %}
+                      <a href="/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-red-400">🚪 Logout</a>
+                  </div>
+              </div>
+              <a href="#" class="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-gray-700 dark:text-gray-300" onclick="startJitsiCall()">📞 Video Call</a>
+              </nav>
+            </aside>
+    <main class="flex-1 overflow-y-auto p-4 bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+    {% if request.user.role == 'admin' %}
+  <button onclick="openZoomModal()" 
+          class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow-md mt-4">
+    📅 Schedule Zoom Call
+  </button>
+  <a id="zoom-meeting-link"
+  href="#"
+  target="_blank"
+  class="hidden mt-4 text-blue-600 underline text-sm">
+</a>
+{% endif %}
+
+<!-- Zoom Meeting Modal -->
+<div id="zoomModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
+    <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">📅 Schedule Zoom Meeting</h2>
+    
+    <label class="block text-gray-700 dark:text-white mb-2">Topic</label>
+    <input type="text" id="zoom-topic" class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white mb-4" placeholder="Meeting Topic" required>
+
+    <label class="block text-gray-700 dark:text-white mb-2">Duration (minutes)</label>
+    <input type="number" id="zoom-duration" class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white mb-4" placeholder="30" required>
+
+    <label class="block text-gray-700 dark:text-white mb-2">Start Time (UTC)</label>
+    <input type="datetime-local" id="zoom-start-time" class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white mb-4" required>
+
+    <div class="flex justify-end space-x-2">
+      <button onclick="closeZoomModal()" class="px-4 py-2 bg-gray-400 text-white rounded">Cancel</button>
+      <button onclick="submitZoomMeeting()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Done</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+        <!-- Mobile Menu Button -->
+        <div class="md:hidden mb-4">
+          <button onclick="document.querySelector('aside').classList.toggle('hidden')" class="px-3 py-2 bg-gray-800 text-white rounded">
+            ☰ Menu
+          </button>
+        </div>
+        
+  
+        <!-- Dark Mode Toggle -->
+        <div class="flex justify-end mb-4">
+          <button onclick="toggleDarkMode()" class="px-3 py-2 bg-gray-300 dark:bg-gray-700 text-sm rounded">
+            🌞 / 🌙 Toggle Mode
+          </button>
+        </div>
+
+
+    <div class="flex">
+        <main class="flex-1 p-6">
+            {% block content %}{% endblock %}
+        </main>
+    </div>    
+
+
+
+
+<div class="dark:bg-gray-800 rounded-lg shadow-lg project-info">
+    <h1 id="project-title" class="text-gray-700 dark:text-white project-title"></h1>
+    <p id="project-description" class="text-gray-700 dark:text-white project-description"></p>
+    <p id="project-due-date" class="text-gray-700 dark:text-white project-due-date"></p>
+    <p id="project-created-at" class="text-gray-700 dark:text-white project-created-at"></p>
+    {% if request.user.role != 'developer' %}
+    <button id="openModal" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Assign Task
+    </button>
+    {% endif %}
+</div>
+
+<div id="kanban-board" class="kanban-board"></div>
+<div id="assignTaskModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+  <div class="dark:bg-gray-800 rounded-lg shadow-lg w-1/3 p-6 overflow-y-auto max-h-screen">
+    <h2 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">Assign Task</h2>
+    <form method="POST" onsubmit="handleEvent(event)">
+      {% csrf_token %}
+      <input type="hidden" id="id" name="task_id" value="">
+
+      <div class="mb-4">
+        <label for="task-title" class="block font-semibold text-gray-800 dark:text-white">Task Title:</label>
+        <input type="text" name="task-title" id="task-title"
+          class="w-full p-2 rounded mb-4 border border-gray-300 bg-white text-gray-800 
+                 dark:bg-gray-700 dark:text-white dark:border-gray-600" required />
+      </div>
+
+      <div class="mb-4">
+        <label for="task-description" class="block font-semibold text-gray-800 dark:text-white">Task Description:</label>
+        <textarea name="task-description" id="task-description"
+          class="w-full p-2 rounded mb-4 border border-gray-300 bg-white text-gray-800 
+                 dark:bg-gray-700 dark:text-white dark:border-gray-600" required></textarea>
+      </div>
+
+      <div class="mb-4">
+        <label for="developer" class="block font-semibold text-gray-800 dark:text-white">Select Developer:</label>
+        <select name="developer" id="developer"
+          class="w-full p-2 rounded mb-4 border border-gray-300 bg-white text-gray-800 
+                 dark:bg-gray-700 dark:text-white dark:border-gray-600"></select>
+      </div>
+
+      <div class="mb-4">
+        <label for="task-hours" class="block font-semibold text-gray-800 dark:text-white">Hours to Complete:</label>
+        <input type="number" name="task-hours" id="task-hours"
+          class="w-full p-2 rounded mb-4 border border-gray-300 bg-white text-gray-800 
+                 dark:bg-gray-700 dark:text-white dark:border-gray-600" required min="1" />
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-gray-700 dark:text-gray-300">Due Date</label>
+        <input type="date" name="task_due_date" id="task_due_date"
+          class="w-full p-2 rounded mb-4 border border-gray-300 bg-white text-gray-800 
+                 dark:bg-gray-700 dark:text-white dark:border-gray-600" required>
+      </div>
+
+      <input type="text" name="project" id="project" value="" class="hidden" />
+
+      <button type="button" id="suggest-tasks-btn"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        Suggest Tasks
+      </button>
+
+      <!-- Suggestions List -->
+      <div class="mt-4 max-h-40 overflow-y-auto bg-gray-100 dark:bg-gray-800 p-3 rounded shadow-inner">
+        <ul id="task-list" class="list-disc list-inside text-gray-700 dark:text-gray-200 space-y-1 text-sm"></ul>
+      </div>
+
+      <div class="flex justify-end space-x-2 mt-4">
+        <button type="button" id="closeModal" class="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
+        <button type="submit" class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">Assign</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+</div>
+<div id="ai-assistant-button" class="fixed bottom-4 right-4 z-50">
+  <button onclick="toggleAIAssistant()" class="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none">
+    🤖
+  </button>
+</div>
+
+<!-- AI Assistant Chat Box -->
+<div id="ai-assistant-box" class="fixed bottom-20 right-4 w-80 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg z-50 hidden">
+  <div class="flex justify-between items-center bg-blue-600 text-white px-4 py-2 rounded-t-lg">
+    <h3 class="font-semibold">AI Assistant</h3>
+    <button onclick="toggleAIAssistant()" class="text-white hover:text-gray-200">✖</button>
+  </div>
+  <div id="ai-chat-log" class="p-4 max-h-60 overflow-y-auto text-sm space-y-2 text-gray-800 dark:text-gray-100">
+    <p class="text-gray-500 dark:text-gray-400 italic">Ask me anything about your tasks or projects...</p>
+  </div>
+  <form onsubmit="sendAIMessage(event)" class="flex items-center p-2 border-t dark:border-gray-700">
+    <input id="ai-user-input" type="text" placeholder="Type a message..." class="flex-1 px-2 py-1 rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600 text-sm focus:outline-none">
+    <button type="submit" class="ml-2 text-blue-600 dark:text-blue-400 font-bold">Send</button>
+  </form>
+</div>
+
+<script src="{% static 'js/script.js' %}" defer></script>
+<script>
+  let jitsiApi = null;
+   document.getElementById('suggest-tasks-btn').addEventListener('click', () => {
+
+    fetch('/suggest_tasks', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ project_name: project_name })
+})
+.then(res => res.json())
+.then(data => {
+  const list = document.getElementById('task-list');
+  list.innerHTML = '';
+
+  try {
+    // Safely parse the Python-style list from response.reply
+    const tasks = JSON.parse(data.reply.replace(/```.*?\n|\n```/g, '').trim());
+
+    if (Array.isArray(tasks)) {
+      tasks.forEach(task => {
+        const li = document.createElement('li');
+        li.textContent = task;
+        list.appendChild(li);
+      });
+    }
+  } catch (e) {
+    console.error("Failed to parse tasks:", e);
+  }
+});
+
+});
+       async function fetchUnreadNotifications() {
+    try {
+      const response = await fetch('/get_unread_notification_count');
+      const data = await response.json();
+      if (data.unread_count > 0) {
+        const badge = document.getElementById("unread-badge");
+        badge.textContent = data.unread_count;
+        badge.classList.remove("hidden");
+      }
+    } catch (error) {
+      console.error("Failed to load unread notifications:", error);
+    }
+  }
+        function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+    fetchUnreadNotifications();
+// var testSocket = new WebSocket("ws://127.0.0.1:8000/ws/notifications/");
+document.addEventListener("DOMContentLoaded", function () {
+            const settingsBtn = document.getElementById("settingsBtn");
+            const dropdownMenu = document.getElementById("dropdownMenu");
+
+            settingsBtn.addEventListener("click", function () {
+                dropdownMenu.classList.toggle("hidden");
+            });
+
+            // Close dropdown if clicked outside
+            document.addEventListener("click", function (event) {
+                if (!settingsBtn.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                    dropdownMenu.classList.add("hidden");
+                }
+            });
+        });
+// var notificationSocket = new WebSocket("ws://" + window.location.host + "/ws/notifications/");
+
+// notificationSocket.onopen = function () {
+//     console.log("✅ WebSocket connection established!");
+// };
+
+// notificationSocket.onmessage = function (event) {
+    // console.log("🔔 Notification received:", event.data);
+
+//     var data = JSON.parse(event.data);
+
+//     let notificationList = document.getElementById("notification-list");
+//     let notificationItem = document.createElement("li");
+//     notificationItem.innerHTML = `<strong>${data.timestamp}</strong>: ${data.message}`;
+//     let closeButton = document.createElement("button");
+//     closeButton.innerHTML = "❌";
+//     closeButton.classList.add("close-btn");
+//     closeButton.onclick = function () {
+//         notificationItem.remove(); 
+//     };
+    
+//     notificationList.appendChild(notificationItem);
+//     notificationItem.appendChild(closeButton);
+//     document.getElementById("notification-container").classList.remove("hidden");
+// };
+
+// notificationSocket.onerror = function (error) {
+//     console.error("❌ WebSocket Error:", error);
+// };
+
+
+let projectId;
+let projects_data = JSON.parse('{{ projects|safe }}');
+console.log("Projects_data -", projects_data[0]);
+let project_name=projects_data[0].name
+
+let tasks_data = JSON.parse('{{ tasks|safe }}');
+console.log("Tasks_data -", tasks_data);
+
+if (projects_data.length > 0) {
+    projectId = projects_data[0].id;  
+    console.log(projectId)
+    document.getElementById("project").value = projectId;
+}
+
+let developers_data = JSON.parse('{{ developers|safe }}');
+console.log("Developers_data -", developers_data);
+
+let users_data=JSON.parse('{{current_user|safe}}');
+console.log("users-data-:",users_data)
+
+let isDeveloper = developers_data.some(dev => dev.username === users_data.username);
+console.log(isDeveloper)
+
+if (projects_data.length > 0) {
+    const project = projects_data[0];
+
+    document.getElementById("project-title").textContent = `Project: ${project.name}`;
+    document.getElementById("project-description").textContent = `Description: ${project.description}`;
+    document.getElementById("project-due-date").textContent = `Due Date: ${project.due_date}`;
+    document.getElementById("project-created-at").textContent = `Created At: ${project.created_at}`;
+}
+
+document.getElementById("openModal").addEventListener("click", function () {
+    document.getElementById("assignTaskModal").classList.remove("hidden");
+});
+
+document.getElementById("closeModal").addEventListener("click", function () {
+    document.getElementById("assignTaskModal").classList.add("hidden");
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    let developers = JSON.parse('{{ developers|safe }}');
+    let projects = JSON.parse('{{ projects|safe }}');
+
+    let developerSelect = document.getElementById("developer");
+    developers.forEach(dev => {
+        let option = document.createElement("option");
+        option.value = dev.id;
+        option.textContent = dev.username;
+        developerSelect.appendChild(option);
+    });
+
+
+});
+
+function handleEvent(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    console.log(projectId)
+
+    formData.append("project", projectId);
+
+    fetch('/create_task', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert("Error: " + data.error);
+        } else {
+            alert("Success: " + data.message);
+            window.location.href = "/projects";  
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}           
+function toggleAIAssistant() {
+  const chatBox = document.getElementById("ai-assistant-box");
+  chatBox.classList.toggle("hidden");
+}
+
+async function sendAIMessage(event) {
+  event.preventDefault();
+  const input = document.getElementById("ai-user-input");
+  const message = input.value.trim();
+  if (!message) return;
+
+  const chatLog = document.getElementById("ai-chat-log");
+  chatLog.innerHTML += `<div class="text-right"><strong>You:</strong> ${message}</div>`;
+  input.value = "";
+
+  try {
+    const response = await fetch("/ai_assistant", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken")
+      },
+      body: JSON.stringify({ message })
+    });
+
+    const data = await response.json();
+    chatLog.innerHTML += `<div><strong>AI:</strong> ${data.reply}</div>`;
+    chatLog.scrollTop = chatLog.scrollHeight;
+  } catch (error) {
+    chatLog.innerHTML += `<div class="text-red-500">Error fetching AI response.</div>`;
+  }
+}
+
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+function toggleSettings() {
+        const dropdown = document.getElementById("settings-dropdown");
+        dropdown.classList.toggle("hidden");
+    }
+    document.addEventListener("click", function (event) {
+        const button = document.getElementById("settings-menu");
+        const dropdown = document.getElementById("settings-dropdown");
+        if (!button.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.classList.add("hidden");
+        }
+    });
+    function submitZoomMeeting() {
+  const topic = document.getElementById("zoom-topic").value;
+  const duration = parseInt(document.getElementById("zoom-duration").value);
+  const startTime = document.getElementById("zoom-start-time").value;
+
+  if (!topic || !duration || !startTime) {
+    alert("Please fill in all fields.");
+    return;
+  }
+
+  fetch('/create_zoom_meeting', {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: JSON.stringify({
+      project_id: projectId,
+      topic: topic,
+      duration: duration,
+      start_time: startTime
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.join_url) {
+      const link = document.getElementById('zoom-meeting-link');
+      link.href = data.join_url;
+      link.innerText = "🔗 Join Zoom Meeting";
+      link.classList.remove('hidden');
+      closeZoomModal();
+    } else {
+      alert("Zoom meeting could not be created.");
+    }
+  })
+  .catch(err => {
+    console.error("Zoom scheduling error:", err);
+    alert("Error scheduling meeting.");
+  });
+}
+
+function openZoomModal() {
+  document.getElementById("zoomModal").classList.remove("hidden");
+}
+
+function closeZoomModal() {
+  document.getElementById("zoomModal").classList.add("hidden");
+}
+
+
+
+</script>
+</body>
+</html>
+
+
+
